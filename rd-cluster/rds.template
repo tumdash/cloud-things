@@ -1,0 +1,52 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "RDS intance",
+
+  "Parameters": {
+    "privateSubnetA": {
+      "Type": "String",
+      "Description": "Private subnet of deployment in AZ A"
+    },
+    "privateSubnetB": {
+      "Type": "String",
+      "Description": "Private subnet of deployment in AZ B"
+    },
+    "instanceClass":{
+      "Type": "String",
+      "Description": "Instance type for RDS"
+    },
+    "securityGroup":{
+      "Type": "String",
+      "Description": "Internal Security Group for RD cluster"
+    },
+    "name":{
+      "Type": "String",
+      "Description": "Master user name for DB"
+    },
+    "password":{
+      "Type": "String",
+      "Description": "Master password for DB",
+      "NoEcho": "true"
+    }
+  },
+
+  "Resources": {
+
+    "RdsSql":{
+	  "Type": "AWS::RDS::DBInstance",
+      "Properties": {
+		"DBName": "RD",
+		"AllocatedStorage": "100",
+		"DBInstanceClass": {"Ref":"instanceClass"},
+		"Engine": "MySQL",
+		"EngineVersion": "5.5",
+		"Iops": "1000",
+		"MasterUsername": {"Ref": "name"},
+		"MasterUserPassword": {"Ref": "password"},
+		"VPCSecurityGroups":[{"Ref":"securityGroup"}],
+		"MultiAZ": "true"
+      },
+	  "DeletionPolicy": "Delete"
+    }
+  }
+}

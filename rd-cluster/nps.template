@@ -1,0 +1,56 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "NPS instances",
+
+  "Parameters": {
+    "privateSubnetA": {
+      "Type": "String",
+      "Description": "Private subnet of deployment in AZ A"
+    },
+    "privateSubnetB": {
+      "Type": "String",
+      "Description": "Private subnet of deployment in AZ B"
+    },
+    "imageNps": {
+      "Type": "String",
+      "Description": "AMI Id for RD instances"
+    },
+    "instanceType":{
+      "Type": "String",
+      "Description": "Instance type for all RD servers"
+    },
+    "sgId":{
+      "Type": "String",
+      "Description": "Internal Security Group Id for RD cluster"
+    },
+    "credentials": {
+      "Description": "Public/private key pairs to securely connect to instance after it launche",
+      "Type": "AWS::EC2::KeyPair::KeyName"
+    }
+  },
+
+  "Resources": {
+
+	"NPSinA":{
+      "Type": "AWS::EC2::Instance",
+      "Properties": {
+		"ImageId": {"Ref": "imageNps"},
+		"InstanceType": {"Ref": "instanceType"},
+		"SubnetId": {"Ref": "privateSubnetA"},
+		"KeyName": {"Ref": "credentials"},
+		"SecurityGroupIds": [ {"Ref": "sgId"} ]
+      }
+    },
+
+	"NPSinB":{
+      "Type": "AWS::EC2::Instance",
+      "Properties": {
+		"ImageId": {"Ref": "imageNps"},
+		"InstanceType": {"Ref": "instanceType"},
+		"SubnetId": {"Ref": "privateSubnetB"},
+		"KeyName": {"Ref": "credentials"},
+		"SecurityGroupIds": [ {"Ref": "sgId"} ]
+      }
+    }
+  }
+}

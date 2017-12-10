@@ -1,0 +1,91 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "RDWA instances",
+
+  "Parameters": {
+    "enterpriseVpcId":{
+      "Type": "String",
+      "Description": "Target VPC of deployment"
+    },
+	"cidrVpc":{
+	  "Type": "String",
+	  "Description": "Cidr Vpc"
+	},
+    "privateSubnetA": {
+      "Type": "String",
+      "Description": "Private subnet of deployment in AZ A"
+    },
+    "privateSubnetB": {
+      "Type": "String",
+      "Description": "Private subnet of deployment in AZ B"
+    },
+    "rdAmi": {
+      "Type": "String",
+      "Description": "AMI Id for RD instances"
+    },
+    "instanceType":{
+      "Type": "String",
+      "Description": "Instance type for all RD servers"
+    },
+    "credentials": {
+      "Description": "Public/private key pairs to securely connect to instance after it launche",
+      "Type": "AWS::EC2::KeyPair::KeyName"
+    }
+  },
+
+  "Resources": {
+
+    "RDWASecurityGroup":{
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties":{
+        "GroupDescription": "Enable RDWA access from Internet",
+        "VpcId": {"Ref": "enterpriseVpcId"},
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "443",
+            "ToPort": "443",
+            "CidrIp": {"Ref": "cidrVpc"}
+          },
+          {
+            "IpProtocol": "icmp",
+            "FromPort": "-1",
+            "ToPort": "-1",
+            "CidrIp": {"Ref": "cidrVpc"}
+          }
+        ]
+      }
+    },
+
+    "RDWAinA":{
+      "Type": "AWS::EC2::Instance",
+      "Properties": {
+        "ImageId": {"Ref": "rdAmi"},
+        "InstanceType": {"Ref": "instanceType"},
+        "SubnetId": {"Ref": "privateSubnetA"},
+        "KeyName": {"Ref": "credentials"},
+        "SecurityGroupIds": [ {"Fn::GetAtt": ["RDWASecurityGroup", "GroupId" ]} ]
+      }
+    },
+
+	"RDWAinB":{
+      "Type": "AWS::EC2::Instance",
+	  "Properties": {
+		"ImageId": {"Ref": "rdAmi"},
+		"InstanceType": {"Ref": "instanceType"},
+		"SubnetId": {"Ref": "privateSubnetB"},
+		"KeyName": {"Ref": "credentials"},
+		"SecurityGroupIds": [ {"Fn::GetAtt": ["RDWASecurityGroup", "GroupId" ]} ]
+      }
+    }
+  },
+
+  "Outputs":{
+    "RDWAInstance1":{
+      "Value": {"Ref": "RDWAinA"}
+	},
+	"RDWAInstance2":{
+      "Value": {"Ref": "RDWAinB"}
+	}
+  }
+}

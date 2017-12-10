@@ -1,0 +1,256 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Master template of RD cluster",
+
+  "Parameters": {
+    "templateStorage": {
+      "Type": "String",
+      "Description": "S3 bucket for template storage"
+    },
+    "targetVpc": {
+      "Type": "String",
+      "Description": "Target VPC of deployment"
+    },
+    "cidrVpc": {
+      "Type": "String",
+      "Description": "Target VPC cidr"
+    },	
+    "publicSubnetA": {
+      "Type": "String",
+      "Description": "Public subnet of deployment in AZ A"
+    },
+    "publicSubnetB": {
+      "Type": "String",
+      "Description": "Public subnet of deployment in AZ B"
+    },
+    "privateSubnetA": {
+      "Type": "String",
+      "Description": "Private subnet of deployment in AZ A"
+    },
+    "privateSubnetB": {
+      "Type": "String",
+      "Description": "Private subnet of deployment in AZ B"
+    },
+    "amiRD": {
+      "Type": "String",
+      "Description": "Ami of RD cluster for deploy"
+    },
+    "amiFs": {
+      "Type": "String",
+      "Description": "Ami of file server for deploy"
+    },
+    "amiNps": {
+      "Type": "String",
+      "Description": "Ami of Nps server for deploy"
+    },
+    "credentials": {
+      "Description": "Public/private key pairs to securely connect to instance after it launches",
+      "Type": "AWS::EC2::KeyPair::KeyName"
+    },
+    "dbName":{
+      "Type": "String",
+      "Description": "Master user name for RDS"
+    },
+    "dbPassword":{
+      "Type": "String",
+      "Description": "Master password for RDS",
+      "NoEcho": "true"
+    }
+  },
+
+  "Resources": {
+
+  "PublicELBStack":{
+    "DependsOn": "RDWAStack",
+    "DependsOn": "RDGWStack",
+    "Type": "AWS::CloudFormation::Stack",
+	"Properties":{
+	  "TemplateURL": {
+		"Fn::Sub": "https://s3.amazonaws.com/${templateStorage}/public-elb.template"
+	  },
+	  "Parameters": {
+		"enterpriseVpcId": {"Ref": "targetVpc"},
+		"publicSubnetA": {"Ref": "publicSubnetA"},
+		"publicSubnetB": {"Ref": "publicSubnetB"},
+		"privateSubnetA": {"Ref": "privateSubnetA"},
+		"privateSubnetB": {"Ref": "privateSubnetB"},
+		"targetRDWA": [
+			{"Fn::GetAtt": ["RDWAStack", "Outputs.RDWAInstance1"]},
+			{"Fn::GetAtt": ["RDWAStack", "Outputs.RDWAInstance2"]}
+		],
+        "targetRDGW": [
+			{"Fn::GetAtt": ["RDGWStack", "Outputs.RDGWInstance1"]},
+			{"Fn::GetAtt": ["RDGWStack", "Outputs.RDGWInstance2"]}
+		]
+      }
+	}
+  },
+
+  "RDWAStack":{
+    "Type": "AWS::CloudFormation::Stack",
+	"Properties":{
+	  "TemplateURL": {
+        "Fn::Sub":
+          "https://s3.amazonaws.com/${templateStorage}/rdwa.template"
+	  },
+	  "Parameters": {
+		"enterpriseVpcId": {"Ref": "targetVpc"},
+		"privateSubnetA": {"Ref": "privateSubnetA"},
+		"privateSubnetB": {"Ref": "privateSubnetB"},
+		"rdId":{"Ref": "amiRD"},
+		"credentials": {"Ref": "credentials"},
+		"instanceType": "t2.nano"
+	  }
+	}
+  },
+
+  "RDGWStack":{
+    "Type": "AWS::CloudFormation::Stack",
+	"Properties":{
+	  "TemplateURL": {
+        "Fn::Sub":
+          "https://s3.amazonaws.com/${templateStorage}/rdgw.template"
+	  },
+      "Parameters": {
+		"enterpriseVpcId": {"Ref": "targetVpc"},
+		"privateSubnetA": {"Ref": "privateSubnetA"},
+		"privateSubnetB": {"Ref": "privateSubnetB"},
+		"rdId":{"Ref": "amiRD"},
+		"credentials": {"Ref": "credentials"},
+		"instanceType": "t2.nano"
+	  }
+    }
+  },
+
+  "InternalSecurityGroup":{
+    "Type": "AWS::EC2::SecurityGroup",
+    "Properties":{
+      "GroupDescription": "Enable RD internally",
+      "VpcId": {"Ref": "targetVpc"},
+      "SecurityGroupIngress": [
+        {
+          "IpProtocol": "tcp",
+          "FromPort": "3389",
+          "ToPort": "3389",
+          "CidrIp": {"Ref": "cidrVpc"}
+        },
+        {
+          "IpProtocol": "icmp",
+          "FromPort": "-1",
+          "ToPort": "-1",
+          "CidrIp": {"Ref": "cidrVpc"}
+        }
+      ]
+    }
+  },
+
+  "BrokerELBStack":{
+    "DependsOn": "RDCBStack",
+    "Type": "AWS::CloudFormation::Stack",
+	"Properties":{
+	  "TemplateURL": {
+        "Fn::Sub":
+          "https://s3.amazonaws.com/${templateStorage}/broker-elb.template"
+	  },
+      "Parameters": {
+		"securityGroup": {"Ref": "InternalSecurityGroup"},
+		"privateSubnetA": {"Ref": "privateSubnetA"},
+		"privateSubnetB": {"Ref": "privateSubnetB"},
+		"targetRDCB": [
+			{"Fn::GetAtt": ["RDCBStack", "Outputs.RDCBInstance1"]},
+			{"Fn::GetAtt": ["RDCBStack", "Outputs.RDCBInstance2"]}
+		]
+	  }
+    }
+  },
+
+  "RDCBStack":{
+    "Type": "AWS::CloudFormation::Stack",
+	"Properties":{
+	  "TemplateURL": {
+        "Fn::Sub":
+          "https://s3.amazonaws.com/rdcb.template"
+	  },
+      "Parameters": {
+		"securityGroup": {"Ref": "InternalSecurityGroup"},
+		"privateSubnetA": {"Ref": "privateSubnetA"},
+		"privateSubnetB": {"Ref": "privateSubnetB"},
+		"rdId":{"Ref": "amiRD"},
+		"credentials": {"Ref": "credentials"},
+		"instanceType": "t2.nano"
+	  }
+    }
+  },
+
+  "NPSStack":{
+    "Type": "AWS::CloudFormation::Stack",
+	"Properties":{
+	  "TemplateURL": {
+        "Fn::Sub":
+          "https://s3.amazonaws.com/${templateStorage}/nps.template"
+	  },
+	  "Parameters": {
+		"securityGroup": {"Ref": "InternalSecurityGroup"},
+		"privateSubnetA": {"Ref": "privateSubnetA"},
+		"privateSubnetB": {"Ref": "privateSubnetB"},
+		"rdId":{"Ref": "amiNps"},
+		"credentials": {"Ref": "credentials"},
+		"instanceType": "t2.nano"
+	  }
+    }
+  },
+
+  "FSStack":{
+    "Type": "AWS::CloudFormation::Stack",
+	"Properties":{
+	  "TemplateURL": {
+        "Fn::Sub":
+          "https://s3.amazonaws.com/${templateStorage}/file-server.template"
+      },
+      "Parameters": {
+		"securityGroup": {"Ref": "InternalSecurityGroup"},
+		"privateSubnetA": {"Ref": "privateSubnetA"},
+		"rdId":{"Ref": "amiFs"},
+		"credentials": {"Ref": "credentials"},
+		"instanceType": "t2.nano"
+	  }
+    }
+  },
+
+  "RDSHStack":{
+    "Type": "AWS::CloudFormation::Stack",
+	"Properties":{
+	  "TemplateURL": {
+        "Fn::Sub":
+          "https://s3.amazonaws.com/${templateStorage}/rdsh.template"
+	  },
+      "Parameters": {
+		"securityGroup": {"Ref": "InternalSecurityGroup"},
+		"privateSubnetA": {"Ref": "privateSubnetA"},
+		"privateSubnetB": {"Ref": "privateSubnetB"},
+		"rdId":{"Ref": "amiRD"},
+		"credentials": {"Ref": "credentials"},
+		"instanceType": "t2.nano"
+	  }
+    }
+  },
+
+  "RDSStack":{
+    "Type": "AWS::CloudFormation::Stack",
+	"Properties":{
+	  "TemplateURL": {
+        "Fn::Sub":
+          "https://s3.amazonaws.com/${templateStorage}/rds.template"
+	  },
+      "Parameters": {
+		"securityGroup": {"Ref": "InternalSecurityGroup"},
+		"privateSubnetA": {"Ref": "privateSubnetA"},
+		"privateSubnetB": {"Ref": "privateSubnetB"},
+		"name":{"Ref":"dbName"},
+		"password":{"Ref": "dbPassword"},
+		"instanceClass": "db.m1.small"
+	  }
+    }
+  }
+  }
+}

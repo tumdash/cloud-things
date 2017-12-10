@@ -1,0 +1,40 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Broker ELB for RD cluster",
+
+  "Parameters": {
+    "privateSubnetA": {
+      "Type": "String",
+      "Description": "Private subnet of deployment in AZ A"
+    },
+    "privateSubnetB": {
+      "Type": "String",
+      "Description": "Private subnet of deployment in AZ B"
+    },
+    "targetRDCB":{
+      "Type": "List<AWS::EC2::Instance>",
+      "Description": "EC2 instances for RDWA ELB rule"
+    },
+    "securityGroup":{
+      "Type": "String",
+      "Description": "Internal Security Group for RD cluster"
+    }
+  },
+
+  "Resources": {
+
+	"BrokerELB":{
+      "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
+      "Properties":{
+		"CrossZone":"true",
+		"Scheme": "internal",
+		"Subnets": [
+          {"Ref": "privateSubnetA"},
+          {"Ref": "privateSubnetB"}
+        ],
+		"Instances": {"Ref": "targetRDCB"},
+		"SecurityGroups":[{"Ref": "securityGroup"}]
+      }
+    }
+  }
+}
