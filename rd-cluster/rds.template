@@ -15,9 +15,9 @@
       "Type": "String",
       "Description": "Instance type for RDS"
     },
-    "securityGroup":{
+    "sgId":{
       "Type": "String",
-      "Description": "Internal Security Group for RD cluster"
+      "Description": "Internal Security Group Id for RD cluster"
     },
     "name":{
       "Type": "String",
@@ -36,14 +36,14 @@
 	  "Type": "AWS::RDS::DBInstance",
       "Properties": {
 		"DBName": "RD",
-		"AllocatedStorage": "100",
+		"AllocatedStorage": "200",
 		"DBInstanceClass": {"Ref":"instanceClass"},
 		"Engine": "MySQL",
 		"EngineVersion": "5.5",
 		"Iops": "1000",
 		"MasterUsername": {"Ref": "name"},
 		"MasterUserPassword": {"Ref": "password"},
-		"VPCSecurityGroups":[{"Ref":"securityGroup"}],
+		"VPCSecurityGroups":[{"Ref":"sgId"}],
 		"MultiAZ": "true"
       },
 	  "DeletionPolicy": "Delete"

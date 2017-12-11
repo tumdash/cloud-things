@@ -15,9 +15,9 @@
       "Type": "List<AWS::EC2::Instance>",
       "Description": "EC2 instances for RDWA ELB rule"
     },
-    "securityGroup":{
+    "sgId":{
       "Type": "String",
-      "Description": "Internal Security Group for RD cluster"
+      "Description": "Internal Security Group Id for RD cluster"
     }
   },
 
@@ -33,7 +33,7 @@
           {"Ref": "privateSubnetB"}
         ],
 		"Instances": {"Ref": "targetRDCB"},
-		"SecurityGroups":[{"Ref": "securityGroup"}]
+		"SecurityGroups":[{"Ref": "sgId"}]
       }
     }
   }

@@ -95,11 +95,12 @@
 	  },
 	  "Parameters": {
 		"enterpriseVpcId": {"Ref": "targetVpc"},
+		"cidrVpc": {"Ref": "cidrVpc"},
 		"privateSubnetA": {"Ref": "privateSubnetA"},
 		"privateSubnetB": {"Ref": "privateSubnetB"},
-		"rdId":{"Ref": "amiRD"},
+		"rdAmi":{"Ref": "amiRD"},
 		"credentials": {"Ref": "credentials"},
-		"instanceType": "t2.nano"
+		"instanceType": "t2.medium"
 	  }
 	}
   },
@@ -113,11 +114,12 @@
 	  },
       "Parameters": {
 		"enterpriseVpcId": {"Ref": "targetVpc"},
+		"cidrVpc": {"Ref": "cidrVpc"},
 		"privateSubnetA": {"Ref": "privateSubnetA"},
 		"privateSubnetB": {"Ref": "privateSubnetB"},
-		"rdId":{"Ref": "amiRD"},
+		"rdAmi":{"Ref": "amiRD"},
 		"credentials": {"Ref": "credentials"},
-		"instanceType": "t2.nano"
+		"instanceType": "t2.medium"
 	  }
     }
   },
@@ -153,8 +155,7 @@
           "https://s3.amazonaws.com/${templateStorage}/broker-elb.template"
 	  },
       "Parameters": {
-		"securityGroup": {"Ref": "InternalSecurityGroup"},
-		"privateSubnetA": {"Ref": "privateSubnetA"},
+		"sgId": {"Fn::GetAtt": ["InternalSecurityGroup", "GroupId"]},
 		"privateSubnetB": {"Ref": "privateSubnetB"},
 		"targetRDCB": [
 			{"Fn::GetAtt": ["RDCBStack", "Outputs.RDCBInstance1"]},
@@ -169,15 +170,15 @@
 	"Properties":{
 	  "TemplateURL": {
         "Fn::Sub":
-          "https://s3.amazonaws.com/rdcb.template"
+          "https://s3.amazonaws.com/${templateStorage}/rdcb.template"
 	  },
       "Parameters": {
-		"securityGroup": {"Ref": "InternalSecurityGroup"},
+		"sgId": {"Fn::GetAtt": ["InternalSecurityGroup", "GroupId"]},
 		"privateSubnetA": {"Ref": "privateSubnetA"},
 		"privateSubnetB": {"Ref": "privateSubnetB"},
-		"rdId":{"Ref": "amiRD"},
+		"rdAmi":{"Ref": "amiRD"},
 		"credentials": {"Ref": "credentials"},
-		"instanceType": "t2.nano"
+		"instanceType": "t2.medium"
 	  }
     }
   },
@@ -190,12 +191,12 @@
           "https://s3.amazonaws.com/${templateStorage}/nps.template"
 	  },
 	  "Parameters": {
-		"securityGroup": {"Ref": "InternalSecurityGroup"},
+		"sgId": {"Fn::GetAtt": ["InternalSecurityGroup", "GroupId"]},
 		"privateSubnetA": {"Ref": "privateSubnetA"},
 		"privateSubnetB": {"Ref": "privateSubnetB"},
-		"rdId":{"Ref": "amiNps"},
+		"imageNps":{"Ref": "amiNps"},
 		"credentials": {"Ref": "credentials"},
-		"instanceType": "t2.nano"
+		"instanceType": "t2.medium"
 	  }
     }
   },
@@ -208,11 +209,11 @@
           "https://s3.amazonaws.com/${templateStorage}/file-server.template"
       },
       "Parameters": {
-		"securityGroup": {"Ref": "InternalSecurityGroup"},
-		"privateSubnetA": {"Ref": "privateSubnetA"},
-		"rdId":{"Ref": "amiFs"},
+		"sgId": {"Fn::GetAtt": ["InternalSecurityGroup", "GroupId"]},
+		"privateSubnet": {"Ref": "privateSubnetA"},
+		"imageFs":{"Ref": "amiFs"},
 		"credentials": {"Ref": "credentials"},
-		"instanceType": "t2.nano"
+		"instanceType": "t2.medium"
 	  }
     }
   },
@@ -225,12 +226,12 @@
           "https://s3.amazonaws.com/${templateStorage}/rdsh.template"
 	  },
       "Parameters": {
-		"securityGroup": {"Ref": "InternalSecurityGroup"},
+		"sgId": {"Fn::GetAtt": ["InternalSecurityGroup", "GroupId"]},
 		"privateSubnetA": {"Ref": "privateSubnetA"},
 		"privateSubnetB": {"Ref": "privateSubnetB"},
-		"rdId":{"Ref": "amiRD"},
+		"rdAmi":{"Ref": "amiRD"},
 		"credentials": {"Ref": "credentials"},
-		"instanceType": "t2.nano"
+		"instanceType": "t2.medium"
 	  }
     }
   },
@@ -243,12 +244,12 @@
           "https://s3.amazonaws.com/${templateStorage}/rds.template"
 	  },
       "Parameters": {
-		"securityGroup": {"Ref": "InternalSecurityGroup"},
+		"sgId": {"Fn::GetAtt": ["InternalSecurityGroup", "GroupId"]},
 		"privateSubnetA": {"Ref": "privateSubnetA"},
 		"privateSubnetB": {"Ref": "privateSubnetB"},
 		"name":{"Ref":"dbName"},
 		"password":{"Ref": "dbPassword"},
-		"instanceClass": "db.m1.small"
+		"instanceClass": "db.m4.xlarge"
 	  }
     }
   }
