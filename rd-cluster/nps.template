@@ -31,25 +31,25 @@
 
   "Resources": {
 
-	"NPSinA":{
+  	"NPSinA":{
       "Type": "AWS::EC2::Instance",
       "Properties": {
-		"ImageId": {"Ref": "imageNps"},
-		"InstanceType": {"Ref": "instanceType"},
-		"SubnetId": {"Ref": "privateSubnetA"},
-		"KeyName": {"Ref": "credentials"},
-		"SecurityGroupIds": [ {"Ref": "sgId"} ]
+        "ImageId": {"Ref": "imageNps"},
+        "InstanceType": {"Ref": "instanceType"},
+        "SubnetId": {"Ref": "privateSubnetA"},
+        "KeyName": {"Ref": "credentials"},
+        "SecurityGroupIds": [ {"Ref": "sgId"} ]
       }
     },
 
-	"NPSinB":{
+  	"NPSinB":{
       "Type": "AWS::EC2::Instance",
       "Properties": {
-		"ImageId": {"Ref": "imageNps"},
-		"InstanceType": {"Ref": "instanceType"},
-		"SubnetId": {"Ref": "privateSubnetB"},
-		"KeyName": {"Ref": "credentials"},
-		"SecurityGroupIds": [ {"Ref": "sgId"} ]
+        "ImageId": {"Ref": "imageNps"},
+        "InstanceType": {"Ref": "instanceType"},
+        "SubnetId": {"Ref": "privateSubnetB"},
+        "KeyName": {"Ref": "credentials"},
+        "SecurityGroupIds": [ {"Ref": "sgId"} ]
       }
     }
   }

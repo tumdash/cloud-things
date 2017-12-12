@@ -68,24 +68,24 @@
       }
     },
 
-	"RDWAinB":{
-      "Type": "AWS::EC2::Instance",
-	  "Properties": {
-		"ImageId": {"Ref": "rdAmi"},
-		"InstanceType": {"Ref": "instanceType"},
-		"SubnetId": {"Ref": "privateSubnetB"},
-		"KeyName": {"Ref": "credentials"},
-		"SecurityGroupIds": [ {"Fn::GetAtt": ["RDWASecurityGroup", "GroupId" ]} ]
-      }
-    }
+	   "RDWAinB":{
+       "Type": "AWS::EC2::Instance",
+	     "Properties": {
+         "ImageId": {"Ref": "rdAmi"},
+         "InstanceType": {"Ref": "instanceType"},
+         "SubnetId": {"Ref": "privateSubnetB"},
+         "KeyName": {"Ref": "credentials"},
+         "SecurityGroupIds": [ {"Fn::GetAtt": ["RDWASecurityGroup", "GroupId" ]} ]
+       }
+     }
   },
 
   "Outputs":{
     "RDWAInstance1":{
       "Value": {"Ref": "RDWAinA"}
-	},
-	"RDWAInstance2":{
-      "Value": {"Ref": "RDWAinB"}
-	}
+	   },
+	 "RDWAInstance2":{
+     "Value": {"Ref": "RDWAinB"}
+	  }
   }
 }

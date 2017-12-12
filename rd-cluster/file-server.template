@@ -27,14 +27,14 @@
 
   "Resources": {
 
-	"FileStorage":{
+  	"FileStorage":{
       "Type": "AWS::EC2::Instance",
       "Properties": {
-		"ImageId": {"Ref": "imageFs"},
-		"InstanceType": {"Ref": "instanceType"},
-		"SubnetId": {"Ref": "privateSubnet"},
-		"KeyName": {"Ref": "credentials"},
-		"SecurityGroupIds": [ {"Ref": "sgId"} ]
+        "ImageId": {"Ref": "imageFs"},
+        "InstanceType": {"Ref": "instanceType"},
+        "SubnetId": {"Ref": "privateSubnet"},
+        "KeyName": {"Ref": "credentials"},
+        "SecurityGroupIds": [ {"Ref": "sgId"} ]
       }
     }
   }

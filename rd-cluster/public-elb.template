@@ -32,48 +32,20 @@
       "Description": "EC2 instances for RDGW ELB rule"
     }
   },
-  
+
   "Resources": {
-  
-	"PublicELBSecurityGroup":{
-      "Type": "AWS::EC2::SecurityGroup",
-      "Properties":{
-        "GroupDescription": "Enable RD access from Internet",
-		"VpcId": {"Ref": "enterpriseVpcId"},
-		"SecurityGroupIngress": [
-          {
-            "IpProtocol": "tcp",
-            "FromPort": "3389",
-            "ToPort": "3389",
-            "CidrIp": "0.0.0.0/0"
-          },
-          {
-            "IpProtocol": "tcp",
-            "FromPort": "443",
-            "ToPort": "443",
-            "CidrIp": "0.0.0.0/0"
-          },
-          {
-            "IpProtocol": "icmp",
-            "FromPort": "-1",
-            "ToPort": "-1",
-            "CidrIp": "0.0.0.0/0"
-          }
-        ]
-      }
-    },
-	
+
 	"RDWATargetGroup":{
       "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
       "Properties":{
-		"Name": "TG for RDWA",
-		"Port": 443,
-		"Protocol": "HTTPS",
-		"Targets": {"Ref": "targetRDWA"},
-		"VpcId": { "Ref": "enterpriseVpcId"}
+		    "Name": "tgRDWA",
+		    "Port": 443,
+		    "Protocol": "TCP",
+		    "Targets": {"Ref": "targetRDWA"},
+		    "VpcId": { "Ref": "enterpriseVpcId"}
       }
     },
-	
+
     "RDWAListener":{
       "Type" : "AWS::ElasticLoadBalancingV2::Listener",
       "Properties":{
@@ -83,25 +55,25 @@
         }],
         "LoadBalancerArn": {"Ref": "PublicALB"},
         "Port": "443",
-        "Protocol": "HTTPS"
+        "Protocol": "TCP"
       }
     },
-	
+
     "RDGWTargetGroup":{
       "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
       "Properties":{
-        "Name": "TG for RDGW",
+        "Name": "tgRDGW",
         "Port": 3389,
         "Protocol": "TCP",
         "Targets": {"Ref": "targetRDGW"},
         "VpcId": { "Ref": "enterpriseVpcId"}
       }
     },
-	
+
 	"RDGWListener":{
       "Type" : "AWS::ElasticLoadBalancingV2::Listener",
-	  "Properties":{
-		"DefaultActions":[{
+	    "Properties":{
+		    "DefaultActions":[{
           "Type": "forward",
           "TargetGroupArn" : { "Ref": "RDGWTargetGroup"}
         }],
@@ -110,7 +82,7 @@
         "Protocol": "TCP"
       }
     },
-	
+
 	"PublicALB": {
       "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
       "Properties": {
@@ -121,8 +93,14 @@
           {"Ref": "privateSubnetA"},
           {"Ref": "privateSubnetB"}
         ],
-        "SecurityGroups":[{"Ref": "PublicELBSecurityGroup"}]
+        "Type": "network"
       }
+    }
+  },
+
+  "Outputs":{
+    "AccessPoint":{
+      "Value": {"Fn::GetAtt": ["PublicALB", "DNSName"]}
     }
   }
 }

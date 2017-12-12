@@ -28,28 +28,28 @@
       "Type": "AWS::EC2::KeyPair::KeyName"
     }
   },
-  
+
   "Resources": {
 
-	"RDCBinA":{
+  	"RDCBinA":{
       "Type": "AWS::EC2::Instance",
       "Properties": {
-		"ImageId": {"Ref": "rdAmi"},
-		"InstanceType": {"Ref": "instanceType"},
-		"SubnetId": {"Ref": "privateSubnetA"},
-		"KeyName": {"Ref": "credentials"},
-		"SecurityGroupIds": [ {"Ref": "sgId"} ]
+        "ImageId": {"Ref": "rdAmi"},
+        "InstanceType": {"Ref": "instanceType"},
+        "SubnetId": {"Ref": "privateSubnetA"},
+        "KeyName": {"Ref": "credentials"},
+        "SecurityGroupIds": [ {"Ref": "sgId"} ]
       }
     },
 
-	"RDCBinB":{
+    "RDCBinB":{
       "Type": "AWS::EC2::Instance",
       "Properties": {
-		"ImageId": {"Ref": "rdAmi"},
-		"InstanceType": {"Ref": "instanceType"},
-		"SubnetId": {"Ref": "privateSubnetB"},
-		"KeyName": {"Ref": "credentials"},
-		"SecurityGroupIds": [ {"Ref": "sgId"} ]
+        "ImageId": {"Ref": "rdAmi"},
+        "InstanceType": {"Ref": "instanceType"},
+        "SubnetId": {"Ref": "privateSubnetB"},
+        "KeyName": {"Ref": "credentials"},
+        "SecurityGroupIds": [ {"Ref": "sgId"} ]
       }
     }
   },
@@ -57,8 +57,8 @@
   "Outputs":{
     "RDCBInstance1":{
       "Value": {"Ref": "RDCBinA"}
-	},
-	"RDCBInstance2":{
+    },
+    "RDCBInstance2":{
       "Value": {"Ref": "RDCBinB"}
     }
   }

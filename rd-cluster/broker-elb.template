@@ -23,17 +23,17 @@
 
   "Resources": {
 
-	"BrokerELB":{
+  	"BrokerELB":{
       "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
       "Properties":{
-		"CrossZone":"true",
-		"Scheme": "internal",
-		"Subnets": [
+        "CrossZone":"true",
+        "Scheme": "internal",
+        "Subnets": [
           {"Ref": "privateSubnetA"},
           {"Ref": "privateSubnetB"}
         ],
-		"Instances": {"Ref": "targetRDCB"},
-		"SecurityGroups":[{"Ref": "sgId"}]
+        "Instances": {"Ref": "targetRDCB"},
+        "SecurityGroups":[{"Ref": "sgId"}]
       }
     }
   }

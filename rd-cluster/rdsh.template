@@ -31,26 +31,26 @@
 
   "Resources": {
 
-	"RDSHinA":{
+  	"RDSHinA":{
       "Type": "AWS::EC2::Instance",
       "Properties": {
-		"ImageId": {"Ref": "rdAmi"},
-		"InstanceType": {"Ref": "instanceType"},
-		"SubnetId": {"Ref": "privateSubnetA"},
-		"KeyName": {"Ref": "credentials"},
-		"SecurityGroupIds": [ {"Ref": "sgId"} ]
+        "ImageId": {"Ref": "rdAmi"},
+        "InstanceType": {"Ref": "instanceType"},
+        "SubnetId": {"Ref": "privateSubnetA"},
+        "KeyName": {"Ref": "credentials"},
+        "SecurityGroupIds": [ {"Ref": "sgId"} ]
       }
-	},
+  	},
 
-	"RDSHinB":{
+  	"RDSHinB":{
       "Type": "AWS::EC2::Instance",
       "Properties": {
-		"ImageId": {"Ref": "rdAmi"},
-		"InstanceType": {"Ref": "instanceType"},
-		"SubnetId": {"Ref": "privateSubnetB"},
-		"KeyName": {"Ref": "credentials"},
-		"SecurityGroupIds": [ {"Ref": "sgId"} ]
+        "ImageId": {"Ref": "rdAmi"},
+        "InstanceType": {"Ref": "instanceType"},
+        "SubnetId": {"Ref": "privateSubnetB"},
+        "KeyName": {"Ref": "credentials"},
+        "SecurityGroupIds": [ {"Ref": "sgId"} ]
       }
-	}
+  	}
   }
 }

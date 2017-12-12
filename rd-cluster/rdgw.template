@@ -35,13 +35,13 @@
 
   "Resources": {
 
-	"RDGWSecurityGroup":{
+  	"RDGWSecurityGroup":{
       "Type": "AWS::EC2::SecurityGroup",
       "Properties":{
-		"GroupDescription": "Enable RDGW access from Internet",
-		"VpcId": {"Ref": "enterpriseVpcId"},
-		"SecurityGroupIngress": [
-		  {
+    		"GroupDescription": "Enable RDGW access from Internet",
+        "VpcId": {"Ref": "enterpriseVpcId"},
+        "SecurityGroupIngress": [
+          {
             "IpProtocol": "tcp",
             "FromPort": "3389",
             "ToPort": "3389",
@@ -57,34 +57,34 @@
       }
     },
 
-	"RDGWinA":{
-      "Type": "AWS::EC2::Instance",
-      "Properties": {
-        "ImageId": {"Ref": "rdAmi"},
-        "InstanceType": {"Ref": "instanceType"},
-        "SubnetId": {"Ref": "privateSubnetA"},
-        "KeyName": {"Ref": "credentials"},
-        "SecurityGroupIds": [ {"Fn::GetAtt": ["RDGWSecurityGroup", "GroupId" ]} ]
-      }
-    },
+  	"RDGWinA":{
+        "Type": "AWS::EC2::Instance",
+        "Properties": {
+          "ImageId": {"Ref": "rdAmi"},
+          "InstanceType": {"Ref": "instanceType"},
+          "SubnetId": {"Ref": "privateSubnetA"},
+          "KeyName": {"Ref": "credentials"},
+          "SecurityGroupIds": [ {"Fn::GetAtt": ["RDGWSecurityGroup", "GroupId" ]} ]
+        }
+      },
 
-    "RDGWinB":{
-      "Type": "AWS::EC2::Instance",
-      "Properties": {
-        "ImageId": {"Ref": "rdAmi"},
-        "InstanceType": {"Ref": "instanceType"},
-        "SubnetId": {"Ref": "privateSubnetB"},
-        "KeyName": {"Ref": "credentials"},
-        "SecurityGroupIds": [ {"Fn::GetAtt": ["RDGWSecurityGroup", "GroupId" ]} ]
+      "RDGWinB":{
+        "Type": "AWS::EC2::Instance",
+        "Properties": {
+          "ImageId": {"Ref": "rdAmi"},
+          "InstanceType": {"Ref": "instanceType"},
+          "SubnetId": {"Ref": "privateSubnetB"},
+          "KeyName": {"Ref": "credentials"},
+          "SecurityGroupIds": [ {"Fn::GetAtt": ["RDGWSecurityGroup", "GroupId" ]} ]
+        }
       }
-    }
   },
-  
+
   "Outputs":{
     "RDWAInstance1":{
       "Value": {"Ref": "RDGWinA"}
-	},
-	"RDWAInstance2":{
+    },
+    "RDWAInstance2":{
       "Value": {"Ref": "RDGWinB"}
     }
   }

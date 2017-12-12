@@ -33,20 +33,20 @@
   "Resources": {
 
     "RdsSql":{
-	  "Type": "AWS::RDS::DBInstance",
+      "Type": "AWS::RDS::DBInstance",
       "Properties": {
-		"DBName": "RD",
-		"AllocatedStorage": "200",
-		"DBInstanceClass": {"Ref":"instanceClass"},
-		"Engine": "MySQL",
-		"EngineVersion": "5.5",
-		"Iops": "1000",
-		"MasterUsername": {"Ref": "name"},
-		"MasterUserPassword": {"Ref": "password"},
-		"VPCSecurityGroups":[{"Ref":"sgId"}],
-		"MultiAZ": "true"
+        "DBName": "RD",
+        "AllocatedStorage": "200",
+        "DBInstanceClass": {"Ref":"instanceClass"},
+        "Engine": "MySQL",
+        "EngineVersion": "5.5",
+        "Iops": "1000",
+        "MasterUsername": {"Ref": "name"},
+        "MasterUserPassword": {"Ref": "password"},
+        "VPCSecurityGroups":[{"Ref":"sgId"}],
+        "MultiAZ": "true"
       },
-	  "DeletionPolicy": "Delete"
+      "DeletionPolicy": "Delete"
     }
   }
 }
