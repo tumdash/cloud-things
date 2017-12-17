@@ -27,7 +27,7 @@
 
   "Resources": {
 
-  	"FileStorage":{
+    "FileStorage":{
       "Type": "AWS::EC2::Instance",
       "Properties": {
         "ImageId": {"Ref": "imageFs"},

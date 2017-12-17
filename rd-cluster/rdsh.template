@@ -31,7 +31,7 @@
 
   "Resources": {
 
-  	"RDSHinA":{
+    "RDSHinA":{
       "Type": "AWS::EC2::Instance",
       "Properties": {
         "ImageId": {"Ref": "rdAmi"},
@@ -42,7 +42,7 @@
       }
   	},
 
-  	"RDSHinB":{
+    "RDSHinB":{
       "Type": "AWS::EC2::Instance",
       "Properties": {
         "ImageId": {"Ref": "rdAmi"},

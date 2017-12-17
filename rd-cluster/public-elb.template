@@ -35,14 +35,14 @@
 
   "Resources": {
 
-	"RDWATargetGroup":{
+    "RDWATargetGroup":{
       "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
       "Properties":{
-		    "Name": "tgRDWA",
-		    "Port": 443,
-		    "Protocol": "TCP",
-		    "Targets": {"Ref": "targetRDWA"},
-		    "VpcId": { "Ref": "enterpriseVpcId"}
+        "Name": "tgRDWA",
+        "Port": 443,
+        "Protocol": "TCP",
+        "Targets": {"Ref": "targetRDWA"},
+        "VpcId": { "Ref": "enterpriseVpcId"}
       }
     },
 
@@ -70,10 +70,10 @@
       }
     },
 
-	"RDGWListener":{
+    "RDGWListener":{
       "Type" : "AWS::ElasticLoadBalancingV2::Listener",
-	    "Properties":{
-		    "DefaultActions":[{
+      "Properties":{
+        "DefaultActions":[{
           "Type": "forward",
           "TargetGroupArn" : { "Ref": "RDGWTargetGroup"}
         }],
@@ -83,7 +83,7 @@
       }
     },
 
-	"PublicALB": {
+    "PublicALB": {
       "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
       "Properties": {
         "Scheme": "internet-facing",

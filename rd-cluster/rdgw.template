@@ -35,10 +35,10 @@
 
   "Resources": {
 
-  	"RDGWSecurityGroup":{
+    "RDGWSecurityGroup":{
       "Type": "AWS::EC2::SecurityGroup",
       "Properties":{
-    		"GroupDescription": "Enable RDGW access from Internet",
+        "GroupDescription": "Enable RDGW access from Internet",
         "VpcId": {"Ref": "enterpriseVpcId"},
         "SecurityGroupIngress": [
           {
@@ -57,27 +57,27 @@
       }
     },
 
-  	"RDGWinA":{
-        "Type": "AWS::EC2::Instance",
-        "Properties": {
-          "ImageId": {"Ref": "rdAmi"},
-          "InstanceType": {"Ref": "instanceType"},
-          "SubnetId": {"Ref": "privateSubnetA"},
-          "KeyName": {"Ref": "credentials"},
-          "SecurityGroupIds": [ {"Fn::GetAtt": ["RDGWSecurityGroup", "GroupId" ]} ]
-        }
-      },
-
-      "RDGWinB":{
-        "Type": "AWS::EC2::Instance",
-        "Properties": {
-          "ImageId": {"Ref": "rdAmi"},
-          "InstanceType": {"Ref": "instanceType"},
-          "SubnetId": {"Ref": "privateSubnetB"},
-          "KeyName": {"Ref": "credentials"},
-          "SecurityGroupIds": [ {"Fn::GetAtt": ["RDGWSecurityGroup", "GroupId" ]} ]
-        }
+    "RDGWinA":{
+      "Type": "AWS::EC2::Instance",
+      "Properties": {
+        "ImageId": {"Ref": "rdAmi"},
+        "InstanceType": {"Ref": "instanceType"},
+        "SubnetId": {"Ref": "privateSubnetA"},
+        "KeyName": {"Ref": "credentials"},
+        "SecurityGroupIds": [ {"Fn::GetAtt": ["RDGWSecurityGroup", "GroupId" ]} ]
       }
+    },
+
+    "RDGWinB":{
+      "Type": "AWS::EC2::Instance",
+      "Properties": {
+        "ImageId": {"Ref": "rdAmi"},
+        "InstanceType": {"Ref": "instanceType"},
+        "SubnetId": {"Ref": "privateSubnetB"},
+        "KeyName": {"Ref": "credentials"},
+        "SecurityGroupIds": [ {"Fn::GetAtt": ["RDGWSecurityGroup", "GroupId" ]} ]
+      }
+    }
   },
 
   "Outputs":{

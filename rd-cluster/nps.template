@@ -31,7 +31,7 @@
 
   "Resources": {
 
-  	"NPSinA":{
+    "NPSinA":{
       "Type": "AWS::EC2::Instance",
       "Properties": {
         "ImageId": {"Ref": "imageNps"},
@@ -42,7 +42,7 @@
       }
     },
 
-  	"NPSinB":{
+    "NPSinB":{
       "Type": "AWS::EC2::Instance",
       "Properties": {
         "ImageId": {"Ref": "imageNps"},
