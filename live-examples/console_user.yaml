@@ -1,0 +1,37 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'IAM User template for console'
+Parameters:
+  name:
+    Description: 'New user name'
+    Type: String
+
+Resources:
+
+  userAccessKey:
+    Type: 'AWS::IAM::AccessKey'
+    Properties:
+      UserName:
+        !Ref newUser
+
+  newUser:
+    Type: 'AWS::IAM::User'
+    Properties:
+      Policies:
+        -
+          PolicyName: 'assume_policy'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              -
+                Effect: 'Allow'
+                Action:
+                  - 'sts:AssumeRole'
+                Resource: '*'
+      UserName: !Ref name
+
+Outputs:
+
+  AccessKey:
+    Value: !Ref userAccessKey
+  Secret:
+    Value: !GetAtt userAccessKey.SecretAccessKey

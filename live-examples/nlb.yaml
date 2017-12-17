@@ -1,0 +1,90 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Network ELB & 2 EC2 instances'
+Parameters:
+  subnetId1:
+    Type: String
+  subnetId2:
+    Type: String
+  vpcId:
+    Type: String
+  imageId:
+    Type: String
+
+Resources:
+
+  instance1:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      ImageId: !Ref imageId
+      InstanceType: t2.micro
+      SubnetId: !Ref subnetId1
+
+  instance2:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      ImageId: !Ref imageId
+      InstanceType: t2.micro
+      SubnetId: !Ref subnetId2
+
+  targetGroup1:
+    Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
+    Properties:
+      Name: 'TG1'
+      Port: 443
+      Protocol: TCP
+      VpcId: !Ref vpcId
+      Targets:
+        -
+          Id: !Ref instance1
+          Port: 443
+
+
+  targetGroup2:
+    Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
+    Properties:
+      Name: 'TG2'
+      Port: 3389
+      Protocol: TCP
+      VpcId: !Ref vpcId
+      Targets:
+        -
+          Id: !Ref instance2
+          Port: 3389
+
+  Listener1:
+    Type: 'AWS::ElasticLoadBalancingV2::Listener'
+    Properties:
+      DefaultActions:
+        -
+          Type: forward
+          TargetGroupArn: !Ref targetGroup1
+      LoadBalancerArn: !Ref elb
+      Port: 443
+      Protocol: TCP
+
+  Listener2:
+    Type: 'AWS::ElasticLoadBalancingV2::Listener'
+    Properties:
+      DefaultActions:
+        -
+          Type: forward
+          TargetGroupArn: !Ref targetGroup2
+      LoadBalancerArn: !Ref elb
+      Port: 3389
+      Protocol: TCP
+
+  elb:
+    Type: 'AWS::ElasticLoadBalancingV2::LoadBalancer'
+    Properties:
+      Scheme: 'internet-facing'
+      Subnets:
+        - !Ref subnetId1
+        - !Ref subnetId2
+      Type: network
+
+Outputs:
+
+  AccessPoint:
+    Value: !GetAtt
+      - elb
+      - DNSName
