@@ -1,0 +1,59 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Simple SF FSM and with Activity'
+Parameters:
+  activityName:
+    Description: 'Activity Name'
+    Type: String
+
+Resources:
+  myActivity:
+    Type: 'AWS::StepFunctions::Activity'
+    Properties:
+      Name: !Ref activityName
+
+  TestFsm:
+    Type: 'AWS::StepFunctions::StateMachine'
+    Properties:
+      StateMachineName: 'MyAwesomeFSM'
+      DefinitionString: !Sub |
+        {
+          "StartAt":"TestMe",
+          "States":{
+              "TestMe":{
+                "Type": "Task",
+                "Resource": "${myActivity}",
+                "Next": "decision",
+                "HeartbeatSeconds": 10
+              },
+              "decision":{
+                "Type": "Choice",
+                "Choices":[
+                  {
+                    "Variable": "$.iteration",
+                    "NumericGreaterThan": 0,
+                    "Next": "TestMe"
+                  },
+                  {
+                    "Variable": "$.iteration",
+                    "NumericEquals": 0,
+                    "Next": "end"
+                  }
+                ]
+              },
+              "end":{
+                "Type":"Succeed"
+              }
+          }
+        }
+      RoleArn: !GetAtt 'RoleFSM.Arn'
+
+  RoleFSM:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: !Sub 'states.${AWS::Region}.amazonaws.com'
+          Action: 'sts:AssumeRole'

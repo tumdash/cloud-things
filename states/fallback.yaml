@@ -1,0 +1,78 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'SF FSM for Task State with fallback'
+
+Resources:
+  TestLambda:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      Code:
+        ZipFile: |
+          def default_handler(event, context):
+              b = 1/0
+              return 'Hello from pLambda'
+      Handler: index.default_handler
+      Role: !GetAtt 'RoleTestLambda.Arn'
+      Runtime: 'python2.7'
+
+  TestFsm:
+    Type: 'AWS::StepFunctions::StateMachine'
+    DependsOn:
+    - TestLambda
+    Properties:
+      StateMachineName: 'MyAwesomeFSM'
+      DefinitionString: !Sub |
+        {
+          "StartAt":"TestMe",
+          "States":{
+            "TestMe":{
+              "Type": "Task",
+              "Resource": "${TestLambda.Arn}",
+              "Next": "success",
+              "Catch":[
+                {
+                  "ErrorEquals": ["States.TaskFailed"],
+                  "Next": "failure"
+                }
+              ]
+            },
+            "success":{
+              "Type": "Succeed"
+            },
+            "failure":{
+              "Type": "Fail"
+            }
+          }
+        }
+      RoleArn: !GetAtt 'RoleFSM.Arn'
+
+  RoleFSM:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: !Sub 'states.${AWS::Region}.amazonaws.com'
+          Action: 'sts:AssumeRole'
+      Policies:
+      - PolicyName: lambda
+        PolicyDocument:
+          Statement:
+          - Effect: Allow
+            Action: 'lambda:InvokeFunction'
+            Resource:
+            - !GetAtt 'TestLambda.Arn'
+
+  RoleTestLambda:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: 'lambda.amazonaws.com'
+          Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+      - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
