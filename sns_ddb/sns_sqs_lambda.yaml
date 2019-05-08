@@ -1,0 +1,130 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Lambda bind to SQS'
+Parameters:
+  lambdaName:
+    Type: String
+    Description: "sample lambda name to use"
+    Default: "sample-lambda"
+  snsName:
+    Type: String
+    Description: "sample sns name to use"
+    Default: "sample-sns"
+  topicName:
+    Type: String
+    Description: "sample sns topic name to use"
+    Default: "sample-topic"
+  queueName:
+    Type: String
+    Description: "sample queue name to use"
+    Default: "sample-queue"
+  ddbName:
+    Type: String
+    Description: "sample ddb name to use"
+    Default: "sample-ddb"
+
+Resources:
+  SampleQueue:
+    Type: 'AWS::SQS::Queue'
+    Properties:
+      QueueName: !Ref queueName
+
+  SampleSqsPolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      PolicyDocument:
+        Id: SampleSqsPolicy
+        Version: "2012-10-17"
+        Statement:
+        - Sid: sns_send_messages
+          Effect: Allow
+          Principal: '*'
+          Action:
+          - sqs:SendMessage
+          Resource: !GetAtt 'SampleQueue.Arn'
+          Condition:
+            ArnEquals:
+              aws:SourceArn: !Ref SampleSnsTopic
+      Queues:
+      - !Ref SampleQueue
+
+  SampleSnsTopic:
+    DependsOn:
+      - SampleQueue
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: !Ref "snsName"
+      Subscription:
+        -
+          Endpoint: !GetAtt 'SampleQueue.Arn'
+          Protocol: 'sqs'
+      TopicName: !Ref 'topicName'
+
+  SampleMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      EventSourceArn: !GetAtt 'SampleQueue.Arn'
+      BatchSize: 10
+      FunctionName: !GetAtt 'PollerLambda.Arn'
+
+  PollerLambda:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: !Ref lambdaName
+      Timeout: 10
+      Code:
+        ZipFile: |
+          import boto3
+          def default_handler(event, context):
+              dynamodb = boto3.client('dynamodb')
+              PutOperations = []
+              for x in range(1, 11):
+                  PutOperations.append(
+                      {
+                          "PutRequest":{
+                              "Item":{
+                                  "KeyId":{"S": "item" + str(x)},
+                                  "Data":{"S": "data" + str(x)}
+                              }
+                          }
+                      }
+                  )
+              dynamodb.batch_write_item(
+                  RequestItems={"sample-ddb":PutOperations}
+              )
+              return 'hello_done'
+      Handler: index.default_handler
+      Role: !GetAtt 'RolePollerLambda.Arn'
+      Runtime: 'python2.7'
+
+  RolePollerLambda:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: 'lambda.amazonaws.com'
+          Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+      - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+      Policies:
+      -
+        PolicyName: sqs_polling
+        PolicyDocument:
+          Statement:
+          - Effect: Allow
+            Action:
+            - 'sqs:ReceiveMessage'
+            - 'sqs:DeleteMessage'
+            - 'sqs:GetQueueAttributes'
+            Resource:
+            - !GetAtt 'SampleQueue.Arn'
+      -
+        PolicyName: 'ddb_access'
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            Effect: 'Allow'
+            Action: dynamodb:*
+            Resource: !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ddbName}'

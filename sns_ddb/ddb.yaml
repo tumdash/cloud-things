@@ -1,0 +1,23 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Parameters:
+  ddbName:
+    Type: String
+    Description: "sample ddb name to use"
+    Default: "sample-ddb"
+
+Resources:
+  SampleDdb:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        -
+          AttributeName: "KeyId"
+          AttributeType: "S"
+      BillingMode:
+        "PAY_PER_REQUEST"
+      KeySchema:
+        -
+          AttributeName: "KeyId"
+          KeyType: "HASH"
+      TableName:
+        !Ref "ddbName"

@@ -1,0 +1,77 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Parameters:
+  lambdaName:
+    Type: String
+    Description: "sample lambda name to use"
+    Default: "sample-lambda"
+  snsName:
+    Type: String
+    Description: "sample sns name to use"
+    Default: "sample-sns"
+  topicName:
+    Type: String
+    Description: "sample sns topic name to use"
+    Default: "sample-topic"
+  ddbName:
+    Type: String
+    Description: "sample ddb name to use"
+    Default: "sample-ddb"
+
+Resources:
+  SampleLambda:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: !Ref 'lambdaName'
+      Code:
+        ZipFile: |
+          import boto3
+          def default_handler(event, context):
+            key = event['Records'][0]['Sns']['MessageId']
+            ts = event['Records'][0]['Sns']['Timestamp']
+            dynamodb = boto3.client('dynamodb')
+            dynamodb.put_item(TableName='sample-ddb', Item={'KeyId':{'S':key},'Data':{'S':ts}})
+      Handler: index.default_handler
+      Role: !GetAtt 'RoleSampleLambda.Arn'
+      Runtime: 'python2.7'
+
+  RoleSampleLambda:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: 'lambda.amazonaws.com'
+          Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+      - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+      Policies:
+        -
+          PolicyName: 'ddb_access'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              Effect: 'Allow'
+              Action: dynamodb:*
+              Resource: !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ddbName}'
+
+  SampleSnsTopic:
+    DependsOn:
+      - SampleLambda
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: !Ref "snsName"
+      Subscription:
+        -
+          Endpoint: !GetAtt 'SampleLambda.Arn'
+          Protocol: "lambda"
+      TopicName: !Ref 'topicName'
+
+  LambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt 'SampleLambda.Arn'
+      Action: 'lambda:InvokeFunction'
+      Principal: 'sns.amazonaws.com'
+      SourceArn: !Ref SampleSnsTopic
