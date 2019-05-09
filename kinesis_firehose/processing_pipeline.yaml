@@ -1,0 +1,202 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'SQS->Lambda->Kinesis->firehose->S3bucket'
+Parameters:
+  lambdaName:
+    Type: String
+    Description: "sample lambda name to use"
+    Default: "sample-lambda"
+  kinesisName:
+    Type: String
+    Description: "sample kinesis name to use"
+    Default: "sample-kinesis"
+  firehoseName:
+    Type: String
+    Description: "sample kinesis firehose name to use"
+    Default: "sample-firehose"
+  queueArn:
+    Type: String
+    Description: "sample queue arn for lambda to trigger"
+  bucketName:
+    Type: String
+    Description: "sample bucket name for storing firehose data"
+  bufferingInterval:
+    Type: Number
+    Description: "firehose buffering interval (seconds)"
+    Default: 60
+  bufferingSize:
+    Type: Number
+    Description: "firehose buffering size (MB)"
+    Default: 1
+
+Resources:
+  SampleMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      EventSourceArn: !Ref queueArn
+      BatchSize: 10
+      FunctionName: !GetAtt 'ProcessingLambda.Arn'
+
+  ProcessingLambda:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: !Ref lambdaName
+      Timeout: 10
+      Code:
+        ZipFile: |
+          import csv, json, sys, io, boto3, os
+
+          def plainjson2csv(json_string):
+              input = json.loads(json_string)
+              output = io.BytesIO()
+              writer = csv.writer(output)
+              writer.writerow(input.values())
+              return output.getvalue()
+
+          def default_handler(event, context):
+              kinesis = boto3.client('kinesis')
+              KinesisRecords = []
+              for rec in event['Records']:
+                  Csv = plainjson2csv(rec['body'])
+                  kinesisRec = {'Data':Csv, 'PartitionKey':'pkey' }
+                  KinesisRecords.append(kinesisRec)
+              response = kinesis.put_records(
+                  Records=KinesisRecords,
+                  StreamName=os.environ['KINESIS_STREAM_NAME']
+              )
+              return response
+      Handler: index.default_handler
+      Environment:
+        Variables:
+          KINESIS_STREAM_NAME: !Ref kinesisName
+      Role: !GetAtt 'RoleProcessingLambda.Arn'
+      Runtime: 'python2.7'
+
+  RoleProcessingLambda:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: 'lambda.amazonaws.com'
+          Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+      - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+      Policies:
+      -
+        PolicyName: sqs_polling
+        PolicyDocument:
+          Statement:
+          - Effect: Allow
+            Action:
+            - 'sqs:ReceiveMessage'
+            - 'sqs:DeleteMessage'
+            - 'sqs:GetQueueAttributes'
+            Resource:
+            - !Ref queueArn
+      -
+        PolicyName: 'put_kinesis'
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            Effect: 'Allow'
+            Action: kinesis:PutRecords
+            Resource: !GetAtt 'ProcessingKinesis.Arn'
+
+  ProcessingKinesis:
+    Type: 'AWS::Kinesis::Stream'
+    Properties:
+      Name: !Ref kinesisName
+      RetentionPeriodHours: 24
+      ShardCount: 1
+
+  ProcessingFirehose:
+    Type: AWS::KinesisFirehose::DeliveryStream
+    DependsOn:
+    - DeliveryPolicy
+    - ProcessingKinesisPolicy
+    Properties:
+      DeliveryStreamName: !Ref firehoseName
+      DeliveryStreamType: KinesisStreamAsSource
+      S3DestinationConfiguration:
+        BucketARN: !GetAtt 'StoringS3Bucket.Arn'
+        BufferingHints:
+          IntervalInSeconds: !Ref bufferingInterval
+          SizeInMBs: !Ref bufferingSize
+        CompressionFormat: UNCOMPRESSED
+        RoleARN: !GetAtt 'DeliveryRole.Arn'
+      KinesisStreamSourceConfiguration:
+        KinesisStreamARN: !GetAtt 'ProcessingKinesis.Arn'
+        RoleARN: !GetAtt 'ProcessingKinesisRole.Arn'
+
+  StoringS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref bucketName
+
+  DeliveryRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: ''
+            Effect: Allow
+            Principal:
+              Service: firehose.amazonaws.com
+            Action: 'sts:AssumeRole'
+            Condition:
+              StringEquals:
+                'sts:ExternalId': !Ref 'AWS::AccountId'
+
+  DeliveryPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: firehose_delivery_policy
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - 's3:AbortMultipartUpload'
+              - 's3:GetBucketLocation'
+              - 's3:GetObject'
+              - 's3:ListBucket'
+              - 's3:ListBucketMultipartUploads'
+              - 's3:PutObject'
+            Resource:
+              - !Sub 'arn:aws:s3:::${StoringS3Bucket}'
+              - !Sub 'arn:aws:s3:::${StoringS3Bucket}/*'
+      Roles:
+        - !Ref DeliveryRole
+
+  ProcessingKinesisRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: ''
+            Effect: Allow
+            Principal:
+              Service: firehose.amazonaws.com
+            Action: 'sts:AssumeRole'
+            Condition:
+              StringEquals:
+                'sts:ExternalId': !Ref 'AWS::AccountId'
+
+  ProcessingKinesisPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: kinesis_processing_policy
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'kinesis:*'
+            Resource:
+              - !GetAtt 'ProcessingKinesis.Arn'
+      Roles:
+        - !Ref ProcessingKinesisRole
