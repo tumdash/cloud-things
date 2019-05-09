@@ -23,14 +23,12 @@ def plainjson2csv(json_string):
     input = json.loads(json_string)
     output = io.BytesIO()
     writer = csv.writer(output)
-    writer.writerow(input.values())
+    writer.writerow(input.keys())
     return output.getvalue()
 
 def lambda_handler(event, context):
     test = plainjson2csv(x)
-    print("csv=", test)
-    #print("json.loads=", json.loads(x))
-    #print("json.loads.dumps=", json.dumps(json.loads(x)))
+    print("csv header=", test)
     return {
         'statusCode': 200,
         'body': 'Test is done'
