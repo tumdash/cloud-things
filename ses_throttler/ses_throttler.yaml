@@ -1,0 +1,121 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'FIFO SQS and Lambda with scheduled events'
+Parameters:
+  lambdaName:
+    Type: String
+    Description: "sample lambda name to use"
+    Default: "sample-lambda"
+  queueName:
+    Type: String
+    Description: "sample queue name to use"
+    Default: "sample-queue"
+
+Resources:
+  SampleQueue:
+    Type: 'AWS::SQS::Queue'
+    Properties:
+      ContentBasedDeduplication: true
+      FifoQueue: true
+      QueueName: !Sub '${queueName}.fifo'
+
+  ScheduledRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: 'PollerRule'
+      ScheduleExpression: 'rate(1 minute)'
+      State: 'DISABLED'
+      Targets:
+        -
+          Arn: !GetAtt 'ProcessingLambda.Arn'
+          Id: 'PollerFunctionId'
+
+  LambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref lambdaName
+      Action: 'lambda:InvokeFunction'
+      Principal: 'events.amazonaws.com'
+      SourceArn: !GetAtt 'ScheduledRule.Arn'
+
+  ProcessingLambda:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: !Ref lambdaName
+      Timeout: 10
+      Code:
+        ZipFile: |
+          import boto3, os
+          def do_job(message):
+              print("do job over {}".format(message))
+              return 'ok'
+          def process_messages(received):
+              processed = []
+              idCounter = 0
+              for message in received:
+                  result = do_job(message)
+                  if 'ok' == result:
+                      msgReceipt = message['ReceiptHandle']
+                      processed.append({'Id':str(idCounter), 'ReceiptHandle':msgReceipt})
+                      idCounter = idCounter + 1
+                  else:
+                      print("do_job for message {} is failed with reason {}".
+                            format(message, result))
+              return processed
+          def delete_messages(sqs, targetQueue, processedMessages):
+              response = sqs.delete_message_batch(
+                  QueueUrl=targetQueue,
+                  Entries=processedMessages
+              )
+              failedDelete = []
+              if 'Failed' in response.keys():
+                  for fail in response['Failed']:
+                      failId = fail['Id']
+                      failReceipt = [ m['ReceiptHandle'] for m in processedMessages
+                                                         if m['id'] == failId ][0]
+                      failedDelete.append({'Id':failId, 'ReceiptHandle':failReceipt})
+              return failedDelete
+          def default_handler(event, context):
+              sqs = boto3.client('sqs')
+              targetQueue = os.environ['TARGET_QUEUE']
+              response = sqs.receive_message(QueueUrl=targetQueue,
+                                             MaxNumberOfMessages=10)
+              if 'Messages' in response.keys():
+                  received = response['Messages']
+                  processed = process_messages(received)
+                  print("scheduled event @{}: received {} m, processed {} m"
+                        .format(event['time'], len(received), len(processed)))
+                  while processed != []:
+                      processed = delete_messages(sqs, targetQueue, processed)
+              else:
+                  print("scheduled event @{}: queue is empty".format(event['time']))
+              return 'ok'
+      Handler: index.default_handler
+      Environment:
+        Variables:
+          TARGET_QUEUE: !Ref SampleQueue
+      Role: !GetAtt 'RoleProcessingLambda.Arn'
+      Runtime: 'python2.7'
+
+  RoleProcessingLambda:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: 'lambda.amazonaws.com'
+          Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+      - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+      Policies:
+      -
+        PolicyName: sqs_processing
+        PolicyDocument:
+          Statement:
+          - Effect: Allow
+            Action:
+            - 'sqs:ReceiveMessage'
+            - 'sqs:DeleteMessage'
+            Resource:
+            - !GetAtt 'SampleQueue.Arn'
