@@ -44,15 +44,26 @@ Resources:
       Timeout: 10
       Code:
         ZipFile: |
-          import boto3, os
-          def do_job(message):
-              print("do job over {}".format(message))
+          import boto3, os, json
+          def do_job(message_body):
+              intruction = json.loads(message_body)[0]
+              print("sending mail to {} over SES".format(intruction['source']))
+              ses = boto3.client('ses')
+              response = ses.send_bulk_templated_email(
+                  Source=intruction['source'],
+                  Template=intruction['template'],
+                  Destinations=intruction['destinations']
+              )
+              for s in response['Status']:
+                  if s['Status'] != 'Success':
+                      print("sending mail {} failed: {}"
+                            .format(s['MessageId'], s['Error']))
               return 'ok'
           def process_messages(received):
               processed = []
               idCounter = 0
               for message in received:
-                  result = do_job(message)
+                  result = do_job(message['Body'])
                   if 'ok' == result:
                       msgReceipt = message['ReceiptHandle']
                       processed.append({'Id':str(idCounter), 'ReceiptHandle':msgReceipt})

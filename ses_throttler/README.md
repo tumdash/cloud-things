@@ -26,3 +26,9 @@ nick@ubuntu:$ aws sqs send-message \
     "MessageId": "aaaabbbb-cccc-dddd-eeee-ffff11112222"
 }
 ```
+
+Alternatively `injecter.py` script maybe used for manual testing:
+```bash
+AWS_PROFILE=<profile> AWS_DEFAULT_REGION=<region> python3 injecter.py https://<queue-url>/sample-queue.fifo my_source@mail.ru all@everywhere.com template1
+Message 11122233-0000-4444-9999-111777222333 injected
+```
